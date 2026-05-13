@@ -1,0 +1,24 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "A repo for backend learning and project development in the backend &amp; frontend (Mearn Stack)",
+  "type":"module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaniyalAsif7778/Backend.git"
+  },
+  "author": "DaniyaAsif",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DaniyalAsif7778/Backend/issues"
+  },
+  "homepage": "https://github.com/DaniyalAsif7778/Backend#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "mongoose": "^9.6.2"
+  }
+}
