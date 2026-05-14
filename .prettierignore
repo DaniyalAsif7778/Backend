@@ -1,0 +1,12 @@
+# Ignore minified files
+**/*.min.js
+**/*.min.css
+
+# Ignore build artifacts and dependencies
+node_modules/
+dist/
+build/
+coverage/
+
+# Ignore specific folders
+snapshots/Copied!   
