@@ -1,10 +1,12 @@
-import mongoose, { model, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new Schema(
 	{
 		username: {
 			type: String,
-			lowerCase: true,
+			lowercase: true,
 			required: true,
 			unique: true,
 			trim: true,
@@ -12,26 +14,24 @@ const userSchema = new Schema(
 		},
 		email: {
 			type: String,
-			lowerCase: true,
+			lowercase: true,
 			required: true,
 			unique: true,
 			trim: true,
 		},
 		fullName: {
 			type: String,
-			lowerCase: true,
 			required: true,
 			trim: true,
 		},
 		password: {
 			type: String,
-			lowerCase: true,
-			unique: true,
+			required: true,
 			trim: true,
 		},
 		avatar: {
-			type: String, //cloudnery url
-			required: true,
+			type: String, // cloudinary url
+
 		},
 		coverImage: {
 			type: String,
@@ -50,10 +50,11 @@ const userSchema = new Schema(
 	{ timestamps: true },
 );
 
-userSchema.pre('save', function (next) {
-	if (!this.isModified('password')) return next();
-	this.password = this.bcrypt.hash(this.password);
-	next();
+userSchema.pre('save', async function (next) {
+	if (!this.isModified('password')) return   ;
+	this.password = await bcrypt.hash(this.password, 10);
+ 
+	 
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {

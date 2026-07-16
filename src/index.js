@@ -1,26 +1,13 @@
-// import express from 'express';
-
-// const app = express();
-
-// const PORT = 3000;
-
-// app.get('/', (req, res) => {
-//   res.send('hellow dearn server is listening');
-// });
-
-// app.listen(PORT, (req, res) => {
-//   console.log('app is listing at the 3000');
-// });
-
+import dns from 'dns';
 import mongoose from 'mongoose';
-import express from 'express';
 import dotenv from 'dotenv';
+import { app } from './app.js';
 import { DB_NAME } from './constant.js';
 
-const app = express();
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 dotenv.config({
-    path: './env',
+	path: './.env',
 });
 
 (async () => {
@@ -28,8 +15,9 @@ dotenv.config({
         const data = await mongoose.connect(
             `${process.env.MONGODB_URI}/${DB_NAME}`,
         );
-        console.log(
-            `MongoDB connected || DB HOST : ${data.connections[0].host}`,
+
+         console.log(
+            `MongoDB connected || DB HOST : ${data}`,
         );
         app.on('error', (error) => {
             console.log('error', error);
@@ -37,7 +25,7 @@ dotenv.config({
         });
 
         app.listen(process.env.PORT, (req, res) => {
-            console.log('app is listening at port 8000');
+            console.log(`app is listening at port  ${process.env.PORT}`);
         });
     } catch (error) {
         console.log('error', error);
