@@ -4,6 +4,22 @@ import { User } from '../models/user.model.js';
 import { uploadOnCloudinary } from "../utils/cloudnary.js"
 import { upload } from '../middlewares/multer.middleware.js';
 import { ApiResponse } from "../utils/ApiResponse.js"
+
+
+
+const generateAccessAndRefreshToken = (userId)=>{
+    const user = await User.findOne({
+        $or:{userId}
+    }).select("-password -refreshToken")
+
+    const refreshToken = user.generateRefreshToken()
+    const accessToken = user.generateAccessToken()
+
+    user.refreshToken =  refreshToken
+    await user.save({validateBeforeSave:false})
+    return {user ,refreshToken,accessToken}
+}
+
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, password, username } = req.body;
 
@@ -70,4 +86,53 @@ console.log(userExist);
 
 })
 
-export default registerUser
+
+
+const loginUser = asyncHandler(async(req,res)=>{
+    // take input from the user validated the input 
+    // check user exsited in the db 
+    // generate tokens if existed 
+    // if not give them error back 
+    // validation but every field error is differ stored an ddisplay ok
+    // if accestoken exists give acces 
+
+    const {email,password} =  req.body
+
+    if (!email) {
+        throw new ApiError(400 ,"email required for authentication")
+        
+    }
+
+   const user = await  User.findOne({
+        $or:[{email}]
+    })
+
+    if (!User) {
+        throw new ApiError(400,"User does not exist  ")
+    }
+
+
+   const isPasswordValid = await user.isPasswordCorrect(password)
+   if (!isPasswordValid) {
+    throw new ApiError(400,"InValid login credentials")
+   }
+
+const {user ,refreshToken,accessToken} = await  generateAccessAndRefreshToken(user._id)
+const options = {
+    httpOnly:true,
+    secure:true
+}
+
+res.status(200).cookie("refreshToken",refreshToken,options).cookie("accessToken",accessToken,options).json(
+    new ApiResponse(200,{
+        user:[user , accessToken,refreshToken]
+    },
+"user logedin successfully"
+)
+)
+
+})
+
+export   {registerUser
+    ,loginUser
+}
