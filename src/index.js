@@ -13,8 +13,8 @@ dotenv.config({
 (async () => {
     try {
         const data = await mongoose.connect(
-            `${process.env.MONGODB_URI}/${DB_NAME}`,
-        );
+            `${process.env.MONGODB_URI}${DB_NAME}`
+        )
 
          console.log(
             `MongoDB connected || DB HOST : ${data}`,
