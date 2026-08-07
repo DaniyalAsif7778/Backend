@@ -22,7 +22,7 @@ router.route('/login').post(loginUser)
 
 router.route('/logout').post(verifyJwt,logOut)
 router.route('/refresh').post(refreshAccessToken)
-router.route("/update-email").patch(verifyJwt,changeUser)
 router.route("/update-password").patch(verifyJwt,changeUser)
+router.route("/update-email").patch(verifyJwt,changeUser)
 
 export default router;
