@@ -7,18 +7,16 @@ import { DB_NAME } from './constant.js';
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 dotenv.config({
-	path: './.env',
+    path: './.env',
 });
 
 (async () => {
     try {
         const data = await mongoose.connect(
-            `${process.env.MONGODB_URI}${DB_NAME}`
-        )
-
-         console.log(
-            `MongoDB connected || DB HOST : ${data}`,
+            `${process.env.MONGODB_URI}${DB_NAME}`,
         );
+
+        console.log(`MongoDB connected || DB HOST : ${data}`);
         app.on('error', (error) => {
             console.log('error', error);
             throw error;

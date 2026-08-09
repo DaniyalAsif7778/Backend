@@ -1,7 +1,7 @@
 import { v2 as cloudinary } from 'cloudinary';
-
+import process from 'process';
 import fs from 'fs';
-import { ApiError } from './ApiError';
+import { ApiError } from './ApiError.js';
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,7 +10,6 @@ cloudinary.config({
 });
 
 const uploadOnCloudinary = async (localFilePath) => {
- 
     try {
         if (!localFilePath) return;
 
@@ -25,37 +24,37 @@ const uploadOnCloudinary = async (localFilePath) => {
         return response;
     } catch (error) {
         fs.unlinkSync(localFilePath);
-        return null;
+        return error;
     }
 };
 
-const updateFromCloudinary = async (filePath,publicId) => {
-	try {
-		if(!(filePath && publicId) ) return ;
-		const response = await cloudinary.api.Upload(filePath,{
-			public_id: publicId,
-			overwrite:true,
-			invalidate:true,
-		})
+const updateFromCloudinary = async (filePath, publicId) => {
+    try {
+        if (!(filePath && publicId)) return;
+        const response = await cloudinary.api.Upload(filePath, {
+            public_id: publicId,
+            overwrite: true,
+            invalidate: true,
+        });
 
-		return response?.url;
-	} catch (error) {
-		throw new ApiError(404,` !ok while replacing on cloudinary ${error}`)
-	}
+        return response?.url;
+    } catch (error) {
+        throw new ApiError(404, ` !ok while replacing on cloudinary ${error}`);
+    }
 };
 
 const deleteFromCloudinary = async (publicIdsArray) => {
     try {
-        if (!localFilePath) return;
+        if (!publicIdsArray) return;
 
         const response = await cloudinary.api.delete_resources(publicIdsArray);
         return response;
     } catch (error) {
         throw new ApiError(
             404,
-            'Somthing went wrong while deleting the cloudinary pic',
+            ` Somthing went wrong while deleting the cloudinary pic ${error}`,
         );
     }
 };
 
-export { uploadOnCloudinary, deleteFromCloudinary,updateFromCloudinary };
+export { uploadOnCloudinary, deleteFromCloudinary, updateFromCloudinary };

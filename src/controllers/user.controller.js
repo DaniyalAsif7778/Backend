@@ -1,10 +1,13 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { User } from '../models/user.model.js';
-import { uploadOnCloudinary,updateFromCloudinary } from '../utils/cloudnary.js';
+import {
+    uploadOnCloudinary,
+    updateFromCloudinary,
+} from '../utils/cloudnary.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
-
+import mongoose from 'mongoose';
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, password, username } = req.body;
     console.log(fullName, email, username, password);
@@ -271,55 +274,186 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     }
 });
 
-const updateUserAvatar  = asyncHandler(async(req,res)=>{
+const updateUserAvatar = asyncHandler(async (req, res) => {
     const user = req.user;
 
-  if (!user) {
-    throw new ApiError(400,"unAthorized request")
-  }
-const avatarLoalPath = req.file?.avatar[0].path;
+    if (!user) {
+        throw new ApiError(400, 'unAthorized request');
+    }
+    const avatarLoalPath = req.file?.avatar[0].path;
 
-if (!avatarLoalPath) {
-    throw new ApiError(404,"local path does not find avatar")
-}
-  const avatar = await  updateFromCloudinary(avatarLoalPath ,user?.avatar);
-   user?.avatar =  avatar
- user.save({validateBeforeSave:false})
- 
- return res.status(200).json(201,
-    {
-        user:user,
+    if (!avatarLoalPath) {
+        throw new ApiError(404, 'local path does not find avatar');
+    }
+    const avatar = await updateFromCloudinary(avatarLoalPath, user?.avatar);
+    user.avatar = avatar;
+    user.save({ validateBeforeSave: false });
 
-    },
-    "avater successfuly updated"
- )
-
-})
-const updatedCoverImage  = asyncHandler(async(req,res)=>{
+    return res.status(200).json(
+        201,
+        {
+            user: user,
+        },
+        'avater successfuly updated',
+    );
+});
+const updatedCoverImage = asyncHandler(async (req, res) => {
     const user = req.user;
 
-  if (!user) {
-    throw new ApiError(400,"unAthorized request")
-  }
+    if (!user) {
+        throw new ApiError(400, 'unAthorized request');
+    }
 
-const coverImageLoalPath = req.file?.coverImage[0].path;
-if (!coverImageLoalPath) {
-    throw new ApiError(404,"local path doesnot find coverImage")
-}
-  const coverImage =await  updateFromCloudinary(coverImageLoalPath ,user?.coverImage);
-   user?.coverImage =  coverImage
- user.save({validateBeforeSave:false})
- 
- return res.status(200).json(201,
-    {
-        user:user,
+    const coverImageLoalPath = req.file?.coverImage[0].path;
+    if (!coverImageLoalPath) {
+        throw new ApiError(404, 'local path doesnot find coverImage');
+    }
+    const coverImage = await updateFromCloudinary(
+        coverImageLoalPath,
+        user?.coverImage,
+    );
+    user.coverImage = coverImage;
+    user.save({ validateBeforeSave: false });
 
-    },
-    "avater successfuly updated"
- )
+    return res.status(200).json(
+        201,
+        {
+            user: user,
+        },
+        'avater successfuly updated',
+    );
+});
 
-})
+const getUserProfileInfo = asyncHandler(async (req, res) => {
+    const { username } = req.param;
 
+    if (!username) {
+        throw new ApiError(400, 'requested data is not found');
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: { username },
+        },
+        {
+            $lookup: {
+                from: 'subscriptions',
+                localField: '_id',
+                foreignField: 'channel',
+                as: 'subscribers',
+            },
+        },
+        {
+            $lookup: {
+                from: 'subscriptions',
+                localField: '_id',
+                foreignField: 'subscriber',
+                as: 'subscribedTo',
+            },
+        },
+        {
+            $addFields: {
+                subscriberCount: {
+                    $size: '$subscribers',
+                },
+                channelSubscribedToCount: {
+                    $size: '$subscribedTo',
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: { $in: [req.user?._id, '$subscribers.subscriber'] },
+                        then: true,
+                        else: false,
+                    },
+                },
+            },
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                email: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscriberCount: 1,
+                channelSubscribedToCount: 1,
+                isSubscribed: 1,
+            },
+        },
+    ]);
+
+    if (!channel?.length) {
+        throw new ApiError(404, 'something went wrong');
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            201,
+            {
+                channelProfile: channel[0],
+            },
+            'get channel profile successfuly',
+        ),
+    );
+});
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    const userId = req.user?._id;
+
+    if (!userId) {
+        throw new ApiError(400, 'unAthorized request');
+    }
+
+    const watchHistory = User.aggregate([
+        {
+            $match: {
+                _id: mongoose.Types.ObjectId(userId),
+            },
+        },
+        {
+            $lookup: {
+                from: 'videos',
+                localField: 'watchHistory',
+                foreignField: '_id',
+                as: 'history',
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'owner',
+                            foreignField: '_id',
+                            as: 'owner',
+                        },
+                    },
+                    {
+                        $project: {
+                            fullName: 1,
+                            username: 1,
+                            avatar: 1,
+                        },
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: '$owner',
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(
+            201,
+            {
+                userWatchHistory: watchHistory[0].watchHistory,
+            },
+            'get user watchHistory successfuly',
+        ),
+    );
+});
 export {
     registerUser,
     loginUser,
@@ -327,4 +461,8 @@ export {
     refreshAccessToken,
     changeCurrentPassword,
     updateAccountDetails,
+    updateUserAvatar,
+    updatedCoverImage,
+    getUserProfileInfo,
+    getWatchHistory,
 };
