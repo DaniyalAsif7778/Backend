@@ -10,8 +10,7 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, email, password, username } = req.body;
-    console.log(fullName, email, username, password);
-
+ 
     if (
         [fullName, email, password, username].some(
             (field) => field?.trim() === '',
@@ -30,8 +29,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const avatarLocalPath = req.files?.avatar[0]?.path;
     // let  coverImageLocalPath = req?.files?.coverImage[0]?.path
-    console.log(req.files?.coverImage[0]?.path);
-
+ 
     let coverImageLocalPath;
     if (
         req.files &&
@@ -276,25 +274,31 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
     const user = req.user;
-
+ console.log(user);
+ 
     if (!user) {
         throw new ApiError(400, 'unAthorized request');
     }
-    const avatarLoalPath = req.file?.avatar[0].path;
-
+    const avatarLoalPath = req.file?.path
+ 
     if (!avatarLoalPath) {
         throw new ApiError(404, 'local path does not find avatar');
     }
+        console.log(user.avatar)
+
     const avatar = await updateFromCloudinary(avatarLoalPath, user?.avatar);
+     
     user.avatar = avatar;
     user.save({ validateBeforeSave: false });
 
     return res.status(200).json(
-        201,
+      new ApiResponse(
+          201,
         {
             user: user,
         },
         'avater successfuly updated',
+      )
     );
 });
 const updatedCoverImage = asyncHandler(async (req, res) => {
@@ -304,7 +308,7 @@ const updatedCoverImage = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'unAthorized request');
     }
 
-    const coverImageLoalPath = req.file?.coverImage[0].path;
+    const coverImageLoalPath = req.file?.path;
     if (!coverImageLoalPath) {
         throw new ApiError(404, 'local path doesnot find coverImage');
     }
@@ -316,11 +320,13 @@ const updatedCoverImage = asyncHandler(async (req, res) => {
     user.save({ validateBeforeSave: false });
 
     return res.status(200).json(
-        201,
+     new ApiResponse(
+           201,
         {
             user: user,
         },
         'avater successfuly updated',
+     )
     );
 });
 

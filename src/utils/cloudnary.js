@@ -2,6 +2,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import process from 'process';
 import fs from 'fs';
 import { ApiError } from './ApiError.js';
+import {getCloudinaryPublicId} from "./getCloudinaryPublicId.js";
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -12,7 +13,7 @@ cloudinary.config({
 const uploadOnCloudinary = async (localFilePath) => {
     try {
         if (!localFilePath) return;
-
+  
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: 'auto',
         });
@@ -31,14 +32,20 @@ const uploadOnCloudinary = async (localFilePath) => {
 const updateFromCloudinary = async (filePath, publicId) => {
     try {
         if (!(filePath && publicId)) return;
-        const response = await cloudinary.api.Upload(filePath, {
-            public_id: publicId,
+      const trimPublicId =  getCloudinaryPublicId(publicId)
+        console.log('localpath', filePath, 'publicID ', trimPublicId);
+        const response = await cloudinary.uploader.upload(filePath, {
+            public_id: trimPublicId,
             overwrite: true,
             invalidate: true,
         });
-
-        return response?.url;
+        fs.unlinkSync(filePath);
+          console.log(response);
+          
+        return response ;
     } catch (error) {
+        fs.unlinkSync(filePath);
+
         throw new ApiError(404, ` !ok while replacing on cloudinary ${error}`);
     }
 };
@@ -47,7 +54,9 @@ const deleteFromCloudinary = async (publicIdsArray) => {
     try {
         if (!publicIdsArray) return;
 
-        const response = await cloudinary.api.delete_resources(publicIdsArray);
+        const response =
+            await cloudinary.uploader.delete_resources(publicIdsArray);
+
         return response;
     } catch (error) {
         throw new ApiError(

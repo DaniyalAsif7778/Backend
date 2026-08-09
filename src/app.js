@@ -1,5 +1,5 @@
 import express from 'express';
-
+ 
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 
@@ -19,6 +19,7 @@ app.use(cookieParser());
 // import routes
 
 import userRouter from './routes/user.routes.js';
+import process from 'process';
 
 app.use('/v1/api/users', userRouter);
 
